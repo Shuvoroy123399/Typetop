@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>টাইপ অনুশীলন</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#1b1a18;
+    --panel:#232220;
+    --panel-2:#29271f;
+    --ink:#ede9e1;
+    --muted:#9c958a;
+    --accent:#e2a33d;
+    --accent-dim:#5a4322;
+    --correct:#74c69d;
+    --error:#e2625f;
+    --rule:#3a3733;
+  }
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wrap{
+    max-width:760px;
+    margin:0 auto;
+    padding:18px 16px 48px;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:12px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    color:var(--accent);
+    text-transform:uppercase;
+    margin:0 0 4px;
+  }
+  h1{
+    font-size:22px;
+    margin:0;
+    font-weight:700;
+  }
+  .date-badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:6px;
+    padding:6px 10px;
+    white-space:nowrap;
+  }
+  nav.levels{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    margin-bottom:16px;
+  }
+  nav.levels::-webkit-scrollbar{height:4px;}
+  .lvl-btn{
+    flex:0 0 auto;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    color:var(--muted);
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    padding:8px 12px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .lvl-btn b{color:inherit;font-weight:600;margin-right:6px;}
+  .lvl-btn.active{
+    color:var(--bg);
+    background:var(--accent);
+    border-color:var(--accent);
+  }
+  .lvl-btn:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+  .level-desc{
+    font-size:12.5px;
+    color:var(--muted);
+    margin:-8px 0 16px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:18px;
+  }
+  .target{
+    font-family:'JetBrains Mono',monospace;
+    font-size:18px;
+    line-height:1.7;
+    letter-spacing:.2px;
+    word-break:break-word;
+    margin-bottom:14px;
+    min-height:64px;
+  }
+  .target span.pending{color:var(--muted);}
+  .target span.correct{color:var(--correct);}
+  .target span.incorrect{color:var(--error);background:rgba(226,98,95,.15);border-radius:2px;}
+  .target span.cursor{border-left:2px solid var(--accent);}
+  input.typebox{
+    width:100%;
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    background:var(--bg);
+    color:var(--ink);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    padding:11px 12px;
+    margin-bottom:14px;
+  }
+  input.typebox:disabled{opacity:.5;}
+  .stats{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    align-items:center;
+    margin-bottom:4px;
+  }
+  .stat .num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:20px;
+    font-weight:600;
+  }
+  .stat .lbl{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .spacer{flex:1;}
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--panel-2);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    padding:9px 14px;
+    cursor:pointer;
+  }
+  .btn.primary{
+    background:var(--accent);
+    color:var(--bg);
+    border-color:var(--accent);
+  }
+  .finish-banner{
+    margin-top:14px;
+    padding:10px 12px;
+    border-radius:8px;
+    background:var(--accent-dim);
+    color:var(--accent);
+    font-size:13.5px;
+    display:none;
+  }
+  .finish-banner.show{display:block;}
+  .kb{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    align-items:center;
+  }
+  .kb-row{display:flex;gap:5px;}
+  .key{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    width:26px;
+    height:26px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:5px;
+    background:var(--panel-2);
+    color:var(--muted);
+    border:1px solid var(--rule);
+  }
+  .key.on{
+    background:var(--accent-dim);
+    color:var(--accent);
+    border-color:var(--accent);
+  }
+  .section-title{
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin:0 0 12px;
+  }
+  .chart-empty, .history-empty{
+    font-size:13px;
+    color:var(--muted);
+    text-align:center;
+    padding:18px 0;
+  }
+  table.history{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  table.history th, table.history td{
+    text-align:left;
+    padding:7px 6px;
+    border-bottom:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+  }
+  table.history th{
+    color:var(--muted);
+    font-weight:500;
+    font-size:11px;
+    text-transform:uppercase;
+  }
+  .hist-wrap{max-height:240px;overflow-y:auto;}
+  footer{
+    text-align:center;
+    margin-top:8px;
+  }
+  .reset-btn{
+    font-size:12px;
+    color:var(--muted);
+    background:none;
+    border:none;
+    text-decoration:underline;
+    cursor:pointer;
+  }
+  .reset-btn.confirming{color:var(--error);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">QWERTY TRAINER</p>
+      <h1>টাইপ অনুশীলন</h1>
+    </div>
+    <div class="date-badge" id="todayDate">--</div>
+  </header>
+
+  <nav class="levels" id="levelNav"></nav>
+  <p class="level-desc" id="levelDesc"></p>
+
+  <div class="card">
+    <div class="target" id="targetBox" aria-live="off"></div>
+    <input class="typebox" id="typeInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="এখানে টাইপ শুরু করুন...">
+    <div class="stats">
+      <div class="stat"><div class="num" id="statWpm">0</div><div class="lbl">WPM</div></div>
+      <div class="stat"><div class="num" id="statAcc">100%</div><div class="lbl">নির্ভুলতা</div></div>
+      <div class="stat"><div class="num" id="statTime">00:00</div><div class="lbl">সময়</div></div>
+      <div class="spacer"></div>
+      <button class="btn" id="newTextBtn">নতুন অনুচ্ছেদ</button>
+    </div>
+    <div class="finish-banner" id="finishBanner"></div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">কীবোর্ড সক্রিয় অঞ্চল</p>
+    <div class="kb" id="kbGuide"></div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">অগ্রগতির গ্রাফ</p>
+    <canvas id="progressChart" height="160"></canvas>
+    <div class="chart-empty" id="chartEmpty" style="display:none;">এখনো কোনো সেশন রেকর্ড করা হয়নি। একটি অনুচ্ছেদ শেষ করুন, গ্রাফ এখানে দেখা যাবে।</div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">সাম্প্রতিক সেশন</p>
+    <div class="hist-wrap">
+      <table class="history" id="historyTable" style="display:none;">
+        <thead><tr><th>তারিখ</th><th>লেভেল</th><th>WPM</th><th>নির্ভুলতা</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <div class="history-empty" id="historyEmpty">কোনো ইতিহাস নেই।</div>
+    </div>
+  </div>
+
+  <footer>
+    <button class="reset-btn" id="resetBtn">সব ডাটা মুছুন</button>
+  </footer>
+
+</div>
+
+<script>
+/* ---------- Level data ---------- */
+const ROW1 = ['Q','W','E','R','T','Y','U','I','O','P'];
+const ROW2 = ['A','S','D','F','G','H','J','K','L',';'];
+const ROW3 = ['Z','X','C','V','B','N','M'];
+
+const HOME_SNIPPETS = [
+  "asdf jkl; asdf jkl;","fjfj dkdk slsl a;a;","ask a lad a salad a flask",
+  "all dads ask a hall fall","a glass jar; a flag flask","gas lads add a flag",
+  "salads fall; a glad lass","half a flask; a glad dad"
+];
+const TOP_SNIPPETS = [
+  "quiet typewriter try a pew","top rope your pretty riot","we type quietly your power quote",
+  "true poetry; quiet詩 your wit","try your quiet pottery type","power outage requires quiet routes",
+  "the quiet typist wrote it twice","your future requires quiet repeat"
+];
+const BOTTOM_SNIPPETS = [
+  "zebra mixes a cab can you fix my van","never mix wax my big cat ran fast",
+  "jazz band six black cats nap","explain why my view changed",
+  "vivid maps explain my next move","gaze beyond the next big wave",
+  "amazing jazz bands exist nearby","brave explorers navigate vast caves"
+];
+const WORD_POOL = ["the","quick","brown","fox","jumps","over","lazy","dog","type","practice",
+  "keyboard","finger","speed","accuracy","learn","skill","daily","habit","focus","mind",
+  "hand","code","work","home","school","friend","family","love","time","life",
+  "world","water","light","night","morning","music","paper","pencil","table","chair",
+  "window","garden","river","mountain","ocean","forest","animal","color","number","letter"];
+const SENTENCE_POOL = [
+  "The quick brown fox jumps over the lazy dog.",
+  "Practice every day and your speed will grow.",
+  "A calm mind types faster than a rushed one.",
+  "Good habits are built one small step at a time.",
+  "Reading helps you guess words before you finish them.",
+  "Slow and steady typing builds strong muscle memory.",
+  "Keep your wrists relaxed and your shoulders loose.",
+  "Small daily practice beats one long session a week.",
+  "Look at the screen, not at your fingers.",
+  "Accuracy first, speed will follow naturally.",
+  "Every expert typist was once a slow beginner.",
+  "Take a short break if your hands feel tired."
+];
+
+const LEVELS = [
+  {id:1, label:"হোম রো", desc:"কী: A S D F · J K L ; — আঙুল হোম পজিশনে রেখে অনুশীলন করুন।", rows:[2]},
+  {id:2, label:"টপ রো", desc:"কী: Q W E R T · Y U I O P — হোম রো-এর সাথে টপ রো যুক্ত হলো।", rows:[1,2]},
+  {id:3, label:"বটম রো", desc:"কী: Z X C V B · N M — এখন তিনটি রো-ই অনুশীলনে আছে।", rows:[1,2,3]},
+  {id:4, label:"সাধারণ শব্দ", desc:"পূর্ণ কীবোর্ড ব্যবহার করে সাধারণ ইংরেজি শব্দ অনুশীলন করুন।", rows:[1,2,3]},
+  {id:5, label:"বাক্য", desc:"পূর্ণ বাক্য টাইপ করে গতি ও স্বাভাবিকতা বাড়ান।", rows:[1,2,3]}
+];
+
+/* ---------- State ---------- */
+let state = {
+  levelIndex: 0,
+  target: "",
+  startTime: null,
+  timerId: null,
+  totalKeystrokes: 0,
+  mistakes: 0,
+  finished: false
+};
+let chartInstance = null;
+
+/* ---------- Helpers ---------- */
+function pickRandom(arr, n){
+  const copy = [...arr];
+  const out = [];
+  for(let i=0;i<n && copy.length;i++){
+    const idx = Math.floor(Math.random()*copy.length);
+    out.push(copy.splice(idx,1)[0]);
+  }
+  return out;
+}
+function generateTarget(level){
+  if(level.id===1) return pickRandom(HOME_SNIPPETS,3).join(" ");
+  if(level.id===2) return pickRandom(TOP_SNIPPETS,3).join(" ");
+  if(level.id===3) return pickRandom(BOTTOM_SNIPPETS,3).join(" ");
+  if(level.id===4) return pickRandom(WORD_POOL,16).join(" ")+".";
+  return pickRandom(SENTENCE_POOL,2).join(" ");
+}
+function formatTime(ms){
+  const s = Math.floor(ms/1000);
+  const mm = String(Math.floor(s/60)).padStart(2,"0");
+  const ss = String(s%60).padStart(2,"0");
+  return mm+":"+ss;
+}
+
+/* ---------- Rendering ---------- */
+function renderLevelNav(){
+  const nav = document.getElementById("levelNav");
+  nav.innerHTML = "";
+  LEVELS.forEach((lvl, i)=>{
+    const btn = document.createElement("button");
+    btn.className = "lvl-btn" + (i===state.levelIndex ? " active" : "");
+    btn.innerHTML = `<b>${String(lvl.id).padStart(2,"0")}</b>${lvl.label}`;
+    btn.addEventListener("click", ()=>startLevel(i));
+    nav.appendChild(btn);
+  });
+  document.getElementById("levelDesc").textContent = LEVELS[state.levelIndex].desc;
+}
+function renderKeyboard(){
+  const kb = document.getElementById("kbGuide");
+  const lvl = LEVELS[state.levelIndex];
+  kb.innerHTML = "";
+  [ROW1,ROW2,ROW3].forEach((row,ri)=>{
+    const rowEl = document.createElement("div");
+    rowEl.className = "kb-row";
+    row.forEach(k=>{
+      const keyEl = document.createElement("div");
+      keyEl.className = "key" + (lvl.rows.includes(ri+1) ? " on" : "");
+      keyEl.textContent = k;
+      rowEl.appendChild(keyEl);
+    });
+    kb.appendChild(rowEl);
+  });
+}
+function renderTarget(typed){
+  const box = document.getElementById("targetBox");
+  const target = state.target;
+  let html = "";
+  for(let i=0;i<target.length;i++){
+    const ch = target[i] === " " ? "&nbsp;" : target[i];
+    let cls = "pending";
+    if(i < typed.length){
+      cls = typed[i] === target[i] ? "correct" : "incorrect";
+    }
+    if(i === typed.length) cls += " cursor";
+    html += `<span class="${cls}">${ch}</span>`;
+  }
+  box.innerHTML = html;
+}
+
+/* ---------- Session control ---------- */
+function startLevel(idx){
+  state.levelIndex = idx;
+  resetSession(true);
+  renderLevelNav();
+  renderKeyboard();
+}
+function resetSession(newText){
+  if(state.timerId) clearInterval(state.timerId);
+  state.startTime = null;
+  state.timerId = null;
+  state.totalKeystrokes = 0;
+  state.mistakes = 0;
+  state.finished = false;
+  if(newText) state.target = generateTarget(LEVELS[state.levelIndex]);
+  const input = document.getElementById("typeInput");
+  input.value = "";
+  input.disabled = false;
+  input.focus();
+  document.getElementById("finishBanner").classList.remove("show");
+  document.getElementById("statWpm").textContent = "0";
+  document.getElementById("statAcc").textContent = "100%";
+  document.getElementById("statTime").textContent = "00:00";
+  renderTarget("");
+}
+function tickTimer(){
+  if(!state.startTime) return;
+  document.getElementById("statTime").textContent = formatTime(Date.now()-state.startTime);
+}
+function onInput(e){
+  if(state.finished) return;
+  const value = e.target.value;
+  const target = state.target;
+
+  if(!state.startTime && value.length>0){
+    state.startTime = Date.now();
+    state.timerId = setInterval(tickTimer, 250);
+  }
+
+  if(value.length > (state._prevLen||0)){
+    const idx = value.length-1;
+    state.totalKeystrokes++;
+    if(value[idx] !== target[idx]) state.mistakes++;
+  }
+  state._prevLen = value.length;
+
+  renderTarget(value);
+
+  const acc = state.totalKeystrokes>0
+    ? ((state.totalKeystrokes-state.mistakes)/state.totalKeystrokes*100)
+    : 100;
+  document.getElementById("statAcc").textContent = acc.toFixed(1)+"%";
+
+  if(state.startTime){
+    const minutes = (Date.now()-state.startTime)/60000;
+    const wpm = minutes>0 ? Math.round((value.length/5)/minutes) : 0;
+    document.getElementById("statWpm").textContent = String(Math.max(wpm,0));
+  }
+
+  if(value.length >= target.length){
+    finishSession(acc);
+  }
+}
+function finishSession(acc){
+  state.finished = true;
+  if(state.timerId) clearInterval(state.timerId);
+  document.getElementById("typeInput").disabled = true;
+
+  const minutes = (Date.now()-state.startTime)/60000;
+  const wpm = minutes>0 ? Math.round((state.target.length/5)/minutes) : 0;
+
+  const banner = document.getElementById("finishBanner");
+  banner.textContent = `সম্পন্ন! গতি ${wpm} WPM, নির্ভুলতা ${acc.toFixed(1)}% — নতুন অনুচ্ছেদ বোতামে ক্লিক করুন।`;
+  banner.classList.add("show");
+
+  saveSession({
+    timestamp: Date.now(),
+    date: new Date().toISOString().slice(0,10),
+    levelId: LEVELS[state.levelIndex].id,
+    levelLabel: LEVELS[state.levelIndex].label,
+    wpm: wpm,
+    accuracy: Math.round(acc*10)/10
+  });
+}
+
+/* ---------- Storage ---------- */
+async function saveSession(record){
+  try{
+    await window.storage.set(`session_${record.timestamp}`, JSON.stringify(record));
+    await loadAndRenderHistory();
+  }catch(err){
+    console.error("সেশন সংরক্ষণ ব্যর্থ হয়েছে:", err);
+  }
+}
+async function loadAndRenderHistory(){
+  let sessions = [];
+  try{
+    const listRes = await window.storage.list("session_");
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    for(const k of keys){
+      try{
+        const res = await window.storage.get(k);
+        if(res && res.value) sessions.push(JSON.parse(res.value));
+      }catch(e){ /* skip unreadable key */ }
+    }
+  }catch(err){
+    console.error("ইতিহাস লোড ব্যর্থ হয়েছে:", err);
+  }
+  sessions.sort((a,b)=>a.timestamp-b.timestamp);
+  renderHistoryTable(sessions);
+  renderChart(sessions);
+}
+async function resetAllData(){
+  try{
+    const listRes = await window.storage.list("session_");
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    for(const k of keys){
+      try{ await window.storage.delete(k); }catch(e){ /* ignore */ }
+    }
+  }catch(err){
+    console.error("রিসেট ব্যর্থ হয়েছে:", err);
+  }
+  await loadAndRenderHistory();
+}
+
+/* ---------- History + Chart rendering ---------- */
+function renderHistoryTable(sessions){
+  const table = document.getElementById("historyTable");
+  const empty = document.getElementById("historyEmpty");
+  const body = document.getElementById("historyBody");
+  if(sessions.length===0){
+    table.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+  table.style.display = "table";
+  empty.style.display = "none";
+  const recent = sessions.slice(-12).reverse();
+  body.innerHTML = recent.map(s=>{
+    const d = new Date(s.timestamp);
+    const dateStr = d.toLocaleDateString('bn-BD',{day:'numeric',month:'short'});
+    return `<tr><td>${dateStr}</td><td>${s.levelLabel}</td><td>${s.wpm}</td><td>${s.accuracy}%</td></tr>`;
+  }).join("");
+}
+function renderChart(sessions){
+  const canvas = document.getElementById("progressChart");
+  const empty = document.getElementById("chartEmpty");
+  if(sessions.length===0){
+    canvas.style.display="none";
+    empty.style.display="block";
+    if(chartInstance){ chartInstance.destroy(); chartInstance=null; }
+    return;
+  }
+  canvas.style.display="block";
+  empty.style.display="none";
+
+  const recent = sessions.slice(-20);
+  const labels = recent.map(s=> new Date(s.timestamp).toLocaleDateString('bn-BD',{day:'numeric',month:'short'}));
+  const wpmData = recent.map(s=>s.wpm);
+  const accData = recent.map(s=>s.accuracy);
+
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(canvas.getContext("2d"), {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "WPM",
+          data: wpmData,
+          borderColor: "#e2a33d",
+          backgroundColor: "#e2a33d",
+          tension: 0.3,
+          yAxisID: "y"
+        },
+        {
+          label: "নির্ভুলতা %",
+          data: accData,
+          borderColor: "#74c69d",
+          backgroundColor: "#74c69d",
+          tension: 0.3,
+          yAxisID: "y1"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: {mode:"index", intersect:false},
+      scales: {
+        y: {
+          type:"linear", position:"left",
+          title:{display:true, text:"WPM", color:"#9c958a"},
+          grid:{color:"#3a3733"},
+          ticks:{color:"#9c958a"}
+        },
+        y1: {
+          type:"linear", position:"right", min:0, max:100,
+          title:{display:true, text:"%", color:"#9c958a"},
+          grid:{drawOnChartArea:false},
+          ticks:{color:"#9c958a"}
+        },
+        x: {
+          ticks:{color:"#9c958a"},
+          grid:{color:"#2a2826"}
+        }
+      },
+      plugins: {
+        legend:{labels:{color:"#ede9e1"}}
+      }
+    }
+  });
+}
+
+/* ---------- Init ---------- */
+function initDate(){
+  const today = new Date();
+  document.getElementById("todayDate").textContent =
+    today.toLocaleDateString('bn-BD', {year:'numeric', month:'long', day:'numeric'});
+}
+function initResetButton(){
+  const btn = document.getElementById("resetBtn");
+  let confirming = false;
+  let timeoutId = null;
+  btn.addEventListener("click", ()=>{
+    if(!confirming){
+      confirming = true;
+      btn.textContent = "নিশ্চিত করতে আবার ক্লিক করুন";
+      btn.classList.add("confirming");
+      timeoutId = setTimeout(()=>{
+        confirming = false;
+        btn.textContent = "সব ডাটা মুছুন";
+        btn.classList.remove("confirming");
+      }, 3000);
+    }else{
+      clearTimeout(timeoutId);
+      confirming = false;
+      btn.textContent = "সব ডাটা মুছুন";
+      btn.classList.remove("confirming");
+      resetAllData();
+    }
+  });
+}
+
+document.getElementById("typeInput").addEventListener("input", onInput);
+document.getElementById("newTextBtn").addEventListener("click", ()=>resetSession(true));
+
+initDate();
+initResetButton();
+renderLevelNav();
+renderKeyboard();
+resetSession(true);
+loadAndRenderHistory();
+</script>
+</body>
+</html>
