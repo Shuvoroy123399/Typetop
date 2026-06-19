@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Practice — Desktop Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms!important;animation-iteration-count:1!important;transition-duration:0.01ms!important;scroll-behavior:auto!important;}
+  }
+
+  :root{
+    --accent:#f2a93b;
+    --accent-rgb:242,169,59;
+    --accent-2:#3ddad7;
+    --accent-2-rgb:61,218,215;
+    --error:#ef6f6c;
+    --error-rgb:239,111,108;
+    --radius:16px;
+    --radius-sm:10px;
+  }
+  [data-theme="dark"]{
+    --bg:#0b0f14;
+    --ink:#eef2f5;
+    --muted:#8a93a3;
+    --glass:rgba(255,255,255,0.045);
+    --glass-strong:rgba(255,255,255,0.075);
+    --glass-border:rgba(255,255,255,0.09);
+    --rule:rgba(255,255,255,0.09);
+    --chart-grid:rgba(255,255,255,0.08);
+    --chart-tick:#8a93a3;
+    --shadow:0 24px 60px rgba(0,0,0,0.5);
+    --blob-1:rgba(242,169,59,0.30);
+    --blob-2:rgba(61,218,215,0.24);
+    --input-track:rgba(255,255,255,0.06);
+  }
+  [data-theme="light"]{
+    --bg:#eef1f6;
+    --ink:#1a2029;
+    --muted:#5c6577;
+    --glass:rgba(255,255,255,0.6);
+    --glass-strong:rgba(255,255,255,0.85);
+    --glass-border:rgba(20,25,40,0.08);
+    --rule:rgba(20,25,40,0.09);
+    --chart-grid:rgba(20,25,40,0.08);
+    --chart-tick:#5c6577;
+    --shadow:0 20px 50px rgba(30,40,70,0.12);
+    --blob-1:rgba(242,169,59,0.25);
+    --blob-2:rgba(61,218,215,0.28);
+    --input-track:rgba(20,25,40,0.05);
+  }
+
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .blob{
+    position:fixed;
+    width:560px;height:560px;
+    border-radius:50%;
+    filter:blur(110px);
+    z-index:0;
+    pointer-events:none;
+  }
+  .blob-1{background:var(--blob-1); top:-180px; left:-120px; animation:floatA 26s ease-in-out infinite;}
+  .blob-2{background:var(--blob-2); bottom:-220px; right:-160px; animation:floatB 30s ease-in-out infinite;}
+  @keyframes floatA{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,40px);}}
+  @keyframes floatB{0%,100%{transform:translate(0,0);}50%{transform:translate(-50px,-30px);}}
+
+  .wrap{
+    position:relative;
+    z-index:1;
+    max-width:1480px;
+    margin:0 auto;
+    padding:36px 40px 64px;
+  }
+  @media (max-width:900px){ .wrap{padding:22px 16px 48px;} }
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  .anim{animation:fadeUp .5s ease both;}
+  .anim-1{animation-delay:.02s;} .anim-2{animation-delay:.08s;} .anim-3{animation-delay:.14s;}
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:16px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+  }
+  .brand .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.18em;
+    color:var(--accent);
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:30px;
+    margin:0;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  .header-right{display:flex;align-items:center;gap:10px;}
+  .date-badge{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:8px;
+    padding:9px 14px;
+    white-space:nowrap;
+    backdrop-filter:blur(12px);
+  }
+  .icon-btn{
+    width:38px;height:38px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:10px;
+    cursor:pointer;
+    color:var(--ink);
+    backdrop-filter:blur(12px);
+  }
+  .icon-btn svg{width:18px;height:18px;}
+  .icon-btn:focus-visible, .tab-btn:focus-visible, button:focus-visible{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+  }
+
+  /* ---------- glass card ---------- */
+  .card{
+    background:var(--glass);
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:22px;
+  }
+  .section-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-title .tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+
+  /* ---------- control bar ---------- */
+  .control-bar{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+    margin-bottom:22px;
+    padding:14px 18px;
+  }
+  .control-group{display:flex;flex-direction:column;gap:8px;}
+  .control-group .glabel{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .tab-row{display:flex;gap:6px;flex-wrap:wrap;}
+  .tab-btn{
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    color:var(--muted);
+    background:var(--input-track);
+    border:1px solid var(--glass-border);
+    border-radius:8px;
+    padding:8px 13px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .tab-btn:hover{color:var(--ink);}
+  .tab-btn.active{
+    color:#1b1408;
+    background:var(--accent);
+    border-color:var(--accent);
+  }
+  .control-spacer{flex:1;}
+  .restart-btn{
+    display:flex;align-items:center;gap:8px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    color:var(--ink);
+    background:var(--input-track);
+    border:1px solid var(--glass-border);
+    border-radius:9px;
+    padding:10px 16px;
+    cursor:pointer;
+  }
+  .restart-btn svg{width:15px;height:15px;}
+  .difficulty-hint{
+    font-size:12.5px;
+    color:var(--muted);
+    margin:0 0 22px;
+    padding-left:4px;
+  }
+
+  /* ---------- main grid ---------- */
+  .main-grid{
+    display:grid;
+    grid-template-columns:2.15fr 1fr;
+    gap:22px;
+    align-items:start;
+    margin-bottom:22px;
+  }
+  @media (max-width:1080px){ .main-grid{grid-template-columns:1fr;} }
+
+  /* ---------- test deck ---------- */
+  .test-deck{padding:0;overflow:hidden;}
+  .deck-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 24px;
+    border-bottom:1px solid var(--rule);
+  }
+  .deck-stat{display:flex;flex-direction:column;}
+  .deck-stat .v{
+    font-family:'JetBrains Mono',monospace;
+    font-size:26px;
+    font-weight:600;
+    color:var(--ink);
+    line-height:1.1;
+  }
+  .deck-stat .l{
+    font-size:10.5px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-top:2px;
+  }
+  .deck-stat.accent .v{color:var(--accent);}
+  .timer-bar-track{height:3px;background:var(--rule);}
+  .timer-bar-fill{height:100%;width:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width 1s linear;}
+
+  #testWrapper{
+    position:relative;
+    padding:30px 28px 18px;
+    cursor:text;
+    outline:none;
+  }
+  #wordsDisplay{
+    font-family:'JetBrains Mono',monospace;
+    font-size:21px;
+    line-height:2.2;
+    letter-spacing:.2px;
+    height:97px;
+    overflow:hidden;
+    scroll-behavior:smooth;
+  }
+  .word{margin-right:.55em;display:inline-block;}
+  .word .ch{color:var(--muted);position:relative;}
+  .word .ch.ok{color:var(--accent-2);}
+  .word .ch.bad{color:var(--error);background:rgba(var(--error-rgb),0.12);border-radius:2px;}
+  .word .ch.bad.missing{text-decoration:underline;text-decoration-color:var(--error);opacity:.65;}
+  .word .ch.bad.extra{text-decoration:underline wavy var(--error);}
+  .word.current .ch{color:var(--ink);}
+  .word.current .ch.pending{color:var(--muted);}
+  .word.done.correct .ch{color:var(--accent-2);}
+  .word.done.incorrect .ch.ok{color:var(--ink);}
+  .ch.caret::before{
+    content:'';
+    position:absolute;
+    left:-1px;top:1px;bottom:1px;
+    width:2px;
+    background:var(--accent);
+    animation:blink 1s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  .focus-overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.45);
+    backdrop-filter:blur(3px);
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+    color:#fff;
+    border-radius:var(--radius);
+    transition:opacity .15s ease;
+    z-index:3;
+  }
+  .focus-overlay.hide{opacity:0;visibility:hidden;}
+  .deck-footer{
+    padding:10px 24px 18px;
+    font-size:11.5px;
+    color:var(--muted);
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* ---------- results overlay ---------- */
+  .results-overlay{
+    position:absolute;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    background:rgba(8,10,14,0.72);
+    backdrop-filter:blur(10px);
+    border-radius:var(--radius);
+    z-index:4;
+    padding:20px;
+  }
+  [data-theme="light"] .results-overlay{background:rgba(238,241,246,0.82);}
+  .results-overlay.show{display:flex;}
+  .results-panel{
+    text-align:center;
+    max-width:420px;
+  }
+  .result-badge{
+    display:none;
+    align-items:center;
+    gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#1b1408;
+    background:var(--accent);
+    border-radius:999px;
+    padding:5px 12px;
+    margin:0 auto 14px;
+    width:fit-content;
+  }
+  .result-wpm{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:72px;
+    font-weight:700;
+    line-height:1;
+    color:var(--ink);
+  }
+  .result-wpm-label{
+    font-size:12px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    margin:6px 0 22px;
+  }
+  .result-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:22px;
+  }
+  .result-grid div{
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:10px;
+    padding:10px 4px;
+  }
+  .result-grid .v{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:17px;}
+  .result-grid .l{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+  .result-restart{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    color:#1b1408;
+    background:var(--accent);
+    border:none;
+    border-radius:10px;
+    padding:12px 22px;
+    cursor:pointer;
+  }
+  .result-hint{font-size:11.5px;color:var(--muted);margin-top:10px;font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- sidebar ---------- */
+  .stack{display:flex;flex-direction:column;gap:22px;}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .stat-box{background:var(--input-track);border:1px solid var(--rule);border-radius:10px;padding:12px;}
+  .stat-box .num{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:600;}
+  .stat-box .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:3px;}
+
+  .lb-row{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    gap:10px;
+    align-items:center;
+    padding:9px 4px;
+    border-bottom:1px solid var(--rule);
+    font-size:13px;
+  }
+  .lb-row:last-child{border-bottom:none;}
+  .lb-row.active .lb-name{color:var(--accent);}
+  .lb-name{font-weight:600;}
+  .lb-val{font-family:'JetBrains Mono',monospace;font-size:12.5px;min-width:64px;text-align:right;}
+  .lb-val.muted{color:var(--muted);}
+
+  /* ---------- charts ---------- */
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:22px;}
+  @media (max-width:980px){ .charts-grid{grid-template-columns:1fr;} }
+  .chart-box{height:230px;position:relative;}
+  .chart-empty{font-size:13px;color:var(--muted);text-align:center;padding:90px 0;display:none;}
+
+  /* ---------- heatmap ---------- */
+  .heatmap-card{margin-bottom:22px;}
+  .hm-row{display:flex;gap:5px;margin-bottom:6px;}
+  .hm-key{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11.5px;
+    height:34px;
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:6px;
+    border:1px solid var(--rule);
+    background:var(--input-track);
+    color:var(--muted);
+  }
+  .hm-key.mod{font-size:10px;color:var(--muted);opacity:.6;}
+  .hm-legend{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:11.5px;color:var(--muted);}
+  .hm-legend .grad{
+    width:140px;height:8px;border-radius:4px;
+    background:linear-gradient(90deg, var(--input-track), var(--accent));
+    border:1px solid var(--rule);
+  }
+
+  /* ---------- history ---------- */
+  .history-card .head-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+  .history-card .head-row .section-title{margin:0;flex:1;}
+  .export-btn{
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink);
+    background:var(--input-track);
+    border:1px solid var(--glass-border);
+    border-radius:8px;
+    padding:8px 13px;
+    cursor:pointer;
+  }
+  .hist-wrap{max-height:320px;overflow-y:auto;}
+  table.history{width:100%;border-collapse:collapse;font-size:13px;}
+  table.history th, table.history td{
+    text-align:left;
+    padding:9px 8px;
+    border-bottom:1px solid var(--rule);
+    font-family:'JetBrains Mono',monospace;
+  }
+  table.history th{color:var(--muted);font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;}
+  td.cap{text-transform:capitalize;}
+  .history-empty{font-size:13px;color:var(--muted);text-align:center;padding:30px 0;}
+
+  footer{text-align:center;margin-top:10px;}
+  .reset-btn{
+    font-size:12px;
+    color:var(--muted);
+    background:none;
+    border:none;
+    text-decoration:underline;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .reset-btn.confirming{color:var(--error);}
+</style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="wrap">
+
+  <header class="anim anim-1">
+    <div class="brand">
+      <p class="eyebrow">DESKTOP TYPING TRAINER</p>
+      <h1>Typing Practice</h1>
+    </div>
+    <div class="header-right">
+      <div class="date-badge" id="todayDate">--</div>
+      <button class="icon-btn" id="soundToggle" title="Toggle sound" aria-label="Toggle sound">
+        <svg id="soundIconOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        <svg id="soundIconOff" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+      </button>
+      <button class="icon-btn" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="themeIconSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg id="themeIconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="card control-bar anim anim-2">
+    <div class="control-group">
+      <span class="glabel">Difficulty</span>
+      <div class="tab-row" id="difficultyTabs"></div>
+    </div>
+    <div class="control-group">
+      <span class="glabel">Duration</span>
+      <div class="tab-row" id="durationTabs"></div>
+    </div>
+    <div class="control-spacer"></div>
+    <button class="restart-btn" id="restartBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      Restart
+    </button>
+  </div>
+  <p class="difficulty-hint" id="difficultyHint"></p>
+
+  <div class="main-grid anim anim-3">
+
+    <div class="card test-deck">
+      <div class="deck-top">
+        <div class="deck-stat"><span class="v" id="timerDisplay">0:30</span><span class="l">Time Left</span></div>
+        <div class="deck-stat accent"><span class="v" id="liveWpm">0</span><span class="l">Live WPM</span></div>
+      </div>
+      <div class="timer-bar-track"><div class="timer-bar-fill" id="timerBar"></div></div>
+
+      <div id="testWrapper">
+        <div id="wordsDisplay"></div>
+        <div class="focus-overlay" id="focusOverlay">Click here, then start typing</div>
+        <div class="results-overlay" id="resultsOverlay">
+          <div class="results-panel">
+            <div class="result-badge" id="resultBadge">★ New Personal Best</div>
+            <div class="result-wpm" id="resultWpm">0</div>
+            <div class="result-wpm-label">Net WPM</div>
+            <div class="result-grid">
+              <div><div class="v" id="resultRaw">0</div><div class="l">Raw WPM</div></div>
+              <div><div class="v" id="resultAcc">0%</div><div class="l">Accuracy</div></div>
+              <div><div class="v" id="resultCpm">0</div><div class="l">CPM</div></div>
+              <div><div class="v" id="resultCorrect">0</div><div class="l">Correct</div></div>
+            </div>
+            <button class="result-restart" id="resultRestartBtn">Try Again</button>
+            <p class="result-hint">Press Tab or Enter to restart instantly</p>
+          </div>
+        </div>
+      </div>
+      <p class="deck-footer">Click the panel and start typing · Tab / Enter restarts · Backspace fixes mistakes</p>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <p class="section-title">Your Stats <span class="tag">overall</span></p>
+        <div class="stat-grid">
+          <div class="stat-box"><div class="num" id="ovBest">--</div><div class="lbl">Best WPM</div></div>
+          <div class="stat-box"><div class="num" id="ovAcc">--</div><div class="lbl">Avg Accuracy</div></div>
+          <div class="stat-box"><div class="num" id="ovCpm">--</div><div class="lbl">Best CPM</div></div>
+          <div class="stat-box"><div class="num" id="ovTotal">0</div><div class="lbl">Sessions</div></div>
+        </div>
+        <div class="stat-grid" style="grid-template-columns:1fr;margin-top:12px;">
+          <div class="stat-box"><div class="num" id="ovStreak">0</div><div class="lbl">Day Streak</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="section-title">Leaderboard <span class="tag">by difficulty</span></p>
+        <div id="leaderboardBody"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="charts-grid">
+    <div class="card">
+      <p class="section-title">Live Test Performance <span class="tag">this session</span></p>
+      <div class="chart-box"><canvas id="liveChart"></canvas></div>
+    </div>
+    <div class="card">
+      <p class="section-title">Progress Over Time <span class="tag">last 30 sessions</span></p>
+      <div class="chart-box"><canvas id="progressChart"></canvas><div class="chart-empty" id="progressEmpty">No sessions yet — finish a test to start your trend line.</div></div>
+    </div>
+  </div>
+
+  <div class="card heatmap-card">
+    <p class="section-title">Keyboard Heatmap <span class="tag">cumulative key usage</span></p>
+    <div id="heatmapKeyboard"></div>
+    <div class="hm-legend"><span>Less used</span><span class="grad"></span><span>Most used</span></div>
+  </div>
+
+  <div class="card history-card">
+    <div class="head-row">
+      <p class="section-title">Recent Sessions</p>
+      <button class="export-btn" id="exportCsvBtn">Export CSV</button>
+      <button class="export-btn" id="exportPdfBtn">Export PDF</button>
+    </div>
+    <div class="hist-wrap">
+      <table class="history" id="historyTable" style="display:none;">
+        <thead><tr><th>Date</th><th>Difficulty</th><th>Duration</th><th>WPM</th><th>Accuracy</th><th>CPM</th></tr></thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <div class="history-empty" id="historyEmpty">No sessions yet.</div>
+    </div>
+  </div>
+
+  <footer>
+    <button class="reset-btn" id="resetBtn">Reset All Data</button>
+  </footer>
+
+</div>
+
+<script>
+/* ===================== WORD BANKS ===================== */
+const BEGINNER_WORDS = ["a","an","the","is","it","in","on","at","to","of","and","or","but","for","as","by","up","so","no","go","do","we","he","she","you","my","his","her","its","our","us","am","be","are","was","were","has","had","can","may","did","get","got","run","sit","eat","see","saw","say","put","let","set","ask","try","win","use","buy","walk","talk","read","ride","swim","jump","play","work","help","stop","start","open","close","push","pull","hold","drop","lift","turn","look","find","keep","send","take","give","make","want","need","like","love","feel","hear","know","learn","teach","write","draw","sing","dance","laugh","smile","sleep","wake","dream","plan","build","break","fix","clean","wash","cook","bake","cut","fold","wrap","pack","carry","throw","catch","kick","light","dark","big","small","tall","short","long","wide","deep","high","low","fast","slow","hot","cold","warm","cool","wet","dry","soft","hard","loud","near","far","old","new","good","bad","kind","calm","glad","sad","mad","shy","busy","lazy","brave","quiet","happy","funny","silly","gentle","proud","tired","fresh","clear","sharp","plain","rich","poor","heavy","empty","sweet","sour"];
+
+const EASY_WORDS = ["river","ocean","forest","garden","window","pencil","table","chair","bridge","castle","island","valley","desert","jungle","meadow","harbor","market","school","family","friend","kitchen","bedroom","library","station","airport","factory","stadium","museum","fountain","sidewalk","highway","tunnel","canyon","lagoon","breakfast","sandwich","chocolate","umbrella","backpack","notebook","calendar","computer","keyboard","monitor","speaker","blanket","pillow","curtain","carpet","mirror","candle","balcony","terrace","mailbox","staircase","elevator","basement","ceiling","weather","sunrise","sunset","thunder","lightning","rainbow","autumn","winter","summer","spring","morning","evening","holiday","journey","voyage","mystery","treasure","dragon","wizard","knight","pirate","sailor","captain","engineer","teacher","doctor","nurse","farmer","painter","singer","dancer","writer","driver","pilot","builder","plumber","scientist","athlete","champion","victory","courage","honesty","kindness","patience","wisdom","freedom","justice","harmony","balance","silence","whisper","shadow","crystal","diamond","emerald","golden","silver","bronze","copper","wooden","plastic","metal","fabric","leather","cotton","velvet","silk","wool","denim","button","zipper","pocket","sleeve","collar","ribbon","needle","thread","scissors","hammer","wrench","ladder","bucket","shovel","broom","sponge","towel","napkin","plate","spoon","knife","kettle","teapot","stove","fridge","freezer","blender","toaster","vacuum","camera","battery","engine","rocket","planet","galaxy","comet","meteor","volcano","glacier","tornado","blizzard","drought","famous","ancient","modern","royal","secret","hidden","golden","silent","frozen","burning","melting","floating","falling","rising","spinning"];
+
+const MEDIUM_WORDS = ["adventure","beautiful","challenge","character","chemistry","confident","consider","creative","curiosity","decision","describe","difficult","discover","distance","economy","education","elephant","emotion","emphasis","engineer","entrance","envelope","equation","essential","evidence","exercise","exhibit","expand","expensive","explain","explore","favorite","festival","forecast","fortunate","fragment","frequent","function","generous","geography","gradually","gratitude","guarantee","handsome","harvest","historic","horizon","hospital","identity","imagine","important","impressive","increase","industry","influence","instance","instruct","interest","interview","introduce","involve","journey","judgment","language","laughter","learning","liberty","lifetime","location","magazine","majority","material","maximum","meaning","measure","medicine","memory","mention","minimum","mistake","moment","monster","mountain","movement","mystery","narrate","national","negative","neighbor","network","numerous","obstacle","occasion","opinion","opposite","optimist","organize","original","outcome","overcome","paragraph","parallel","particle","passenger","peaceful","perfect","performance","permanent","persuade","philosophy","physical","pioneer","platform","pleasant","pleasure","politics","positive","possible","powerful","practice","precious","prepare","presence","pressure","previous","priority","probably","problem","produce","progress","project","promise","property","protect","provide","purpose","quality","quantity","question","reaction","reading","realize","reason","receive","recognize","recommend","reduce","reflect","relationship","reliable","remember","represent","require","resource","respect","response","restaurant","result","reveal","review","romantic","routine","satisfy","schedule","science","secondary","section","sentence","sequence","serious","several","significant","similar","situation","solution","specific","standard","strategy","strength","struggle","subject","success","suggest","summary","support","surprise","surround","survive","sympathy","talented","technique","temperature","tension","theory","thorough","thousand","tradition","tragedy","transform","transport","treasure","tremendous","tropical","ultimate","understand","universe","unusual","valuable","variety","vehicle","version","village","violence","visible","vocabulary","volume","volunteer","weakness","wealthy","wonderful"];
+
+const HARD_WORDS = ["abundance","accelerate","accommodate","accomplish","accumulate","achievement","acknowledge","acquisition","adaptation","aggressive","alternative","ambassador","ambiguous","anniversary","anticipate","apparently","appreciate","appropriate","architecture","articulate","assessment","assignment","association","assumption","atmosphere","attachment","attractive","authentic","authority","bankruptcy","bureaucracy","calculation","capability","catastrophe","celebration","certificate","circumstance","civilization","collaboration","commemorate","commitment","communicate","comparative","compassion","compatible","competition","complexity","comprehend","comprehensive","concentrate","conscience","conservative","considerable","consistency","constitution","construction","consultant","consumption","contemporary","contradiction","controversy","convenience","conversation","coordinate","correspond","credibility","curriculum","declaration","dedication","definition","democracy","demonstrate","destination","determination","development","disadvantage","discipline","discrimination","distribution","documentary","dramatically","earthquake","eccentric","economical","efficiency","elaborate","elementary","eliminate","embarrass","emergency","encyclopedia","engagement","enthusiasm","entrepreneur","environment","equivalent","established","estimation","evaluation","exaggerate","examination","exceptional","exclusively","exhibition","expedition","experiment","exploration","extraordinary","fascinating","foundation","fragmentary","fundamental","generation","geography","government","gratitude","guideline","hesitation","hierarchy","hospitality","hypothesis","identification","illustration","imagination","immigration","implication","independence","indication","inevitable","information","infrastructure","ingredient","initiative","innovation","inspiration","institution","instruction","instrument","integration","intelligence","interaction","interpretation","interruption","intervention","investigate","invitation","irrelevant","journalist","jurisdiction","legislation","legitimate","literature","magnificent","maintenance","manipulate","manufacture","mathematics","mechanism","membership","metropolitan","minimalist","miscellaneous","misunderstand","navigation","necessary","negotiate","nevertheless","nomination","nostalgia","notification","observation","occasionally","opportunity","organization","orientation","originality","outstanding","overwhelming","participate","particularly","partnership","perception","perpendicular","persistence","perspective","philosophy","photography","physically","population","possibility","preference","preliminary","preparation","presentation","preservation","prestigious","probability","procedure","proficiency","prohibition","pronunciation","proportion","prosperity","protagonist","psychology","publication","punctuation","qualification","questionnaire","reasonable","recognition","recommendation","reconstruct","refrigerator","registration","regulation","reinforcement","relevant","reluctant","remarkable","renaissance","representative","reputation","requirement","resemblance","reservation","resistance","resolution","responsibility","restoration","revolutionary","satisfaction","scholarship","secretary","sensitivity","significant","simultaneously","sophisticated","specialist","specification","spectacular","speculation","statistics","stereotype","strengthen","subsequent","substantial","successfully","sufficient","suggestion","supervisor","surveillance","sustainable","symbolism","sympathetic","temporary","terminology","theoretical","thoroughly","traditional","transaction","transformation","translation","transparent","tremendous","unanimous","unbelievable","uncertainty","unconscious","understanding","undoubtedly","unemployment","unfortunately","university","unnecessary","vegetarian","verification","vocabulary","volunteer","vulnerability"];
+
+const EXPERT_WORDS = ["acquiescence","aforementioned","ambidextrous","anachronistic","apocalyptic","archaeological","artificial","authoritative","autobiography","bibliography","biodegradable","bureaucratic","cardiovascular","categorically","characteristically","chronological","circumnavigate","claustrophobia","cognizant","comprehensible","conceptualize","confidentiality","congratulations","conscientious","consequential","constitutional","contemporaneous","contradictory","controversial","counterproductive","cryptocurrency","decentralization","deindustrialization","deterministic","disenfranchise","disproportionate","ecclesiastical","encyclopedic","entrepreneurial","epistemological","equilibrium","esoteric","euphemism","exponentially","extraterrestrial","feasibility","forensic","gastronomic","geopolitical","hallucination","heterogeneous","hieroglyphic","hypothetical","idiosyncratic","illegitimate","immunization","impressionism","incomprehensible","indistinguishable","industrialization","infrastructural","inquisitiveness","instantaneous","institutionalize","intercontinental","interdisciplinary","internationalization","interoperability","intramuscular","irreconcilable","irreproducible","juxtaposition","kaleidoscope","kinesthetic","laboratory","legitimization","libertarianism","linguistically","macroeconomics","malnourishment","metamorphosis","meteorological","microorganism","misappropriation","misinterpretation","multidisciplinary","nationalization","neurolinguistic","nonconformist","nondisclosure","notwithstanding","obfuscation","ophthalmologist","oversimplification","paleontology","parliamentary","perpendicularity","philanthropist","phosphorescence","photosynthesis","physiotherapy","polysyllabic","postmodernism","preconceptions","predetermination","prerequisite","procrastination","pronunciation","proportionality","pseudonymous","psychoanalysis","psycholinguistics","quintessential","ramifications","reconciliation","rehabilitation","reincarnation","reminiscence","reorganization","reproducibility","retrospective","revolutionize","sophistication","spontaneously","standardization","stratification","subconsciously","substantiate","superficiality","supplementary","surreptitious","synchronization","technological","telecommunications","theoretically","totalitarianism","transcontinental","transcendental","transformational","transliteration","ultrasonography","unconventional","underestimate","underrepresented","unidirectional","unprecedented","unsubstantiated","verisimilitude","vulnerable","thermodynamics"];
+
+const WORD_POOLS = { beginner: BEGINNER_WORDS, easy: EASY_WORDS, medium: MEDIUM_WORDS, hard: HARD_WORDS, expert: EXPERT_WORDS };
+const PUNCT_CHANCE = { beginner: 0, easy: 0, medium: 0.07, hard: 0.16, expert: 0.26 };
+const NUMBER_CHANCE = { beginner: 0, easy: 0, medium: 0, hard: 0.015, expert: 0.045 };
+
+const DIFFICULTIES = [
+  { id:"beginner", label:"Beginner", hint:"Short common words, no punctuation." },
+  { id:"easy", label:"Easy", hint:"Everyday vocabulary, still no punctuation." },
+  { id:"medium", label:"Medium", hint:"Longer words with light punctuation." },
+  { id:"hard", label:"Hard", hint:"Advanced vocabulary, punctuation and capitals." },
+  { id:"expert", label:"Expert", hint:"Long technical words, numbers and punctuation." }
+];
+const DURATIONS = [15, 30, 60, 120];
+
+/* ===================== KEYBOARD LAYOUT (for heatmap) ===================== */
+const KB_LAYOUT = [
+  [{k:"1"},{k:"2"},{k:"3"},{k:"4"},{k:"5"},{k:"6"},{k:"7"},{k:"8"},{k:"9"},{k:"0"}],
+  [{k:"Tab",mod:true,w:1.5},{k:"Q"},{k:"W"},{k:"E"},{k:"R"},{k:"T"},{k:"Y"},{k:"U"},{k:"I"},{k:"O"},{k:"P"}],
+  [{k:"Caps",mod:true,w:1.8},{k:"A"},{k:"S"},{k:"D"},{k:"F"},{k:"G"},{k:"H"},{k:"J"},{k:"K"},{k:"L"},{k:";"},{k:"Enter",mod:true,w:1.8}],
+  [{k:"Shift",mod:true,w:2.2},{k:"Z"},{k:"X"},{k:"C"},{k:"V"},{k:"B"},{k:"N"},{k:"M"},{k:","},{k:"."},{k:"/"},{k:"Shift",mod:true,w:2.2}],
+  [{k:"Space",mod:true,w:12}]
+];
+
+/* ===================== STATE ===================== */
+let settings = { theme:"dark", sound:true };
+let heatmapCounts = {};
+let allSessions = [];
+
+let test = {
+  difficulty: "easy",
+  duration: 30,
+  words: [],
+  currentIndex: 0,
+  currentTyped: "",
+  active: false,
+  finished: false,
+  startTime: null,
+  timeRemaining: 30,
+  timerId: null,
+  sampleId: null,
+  totalTyped: 0,
+  totalCorrect: 0,
+  totalIncorrect: 0,
+  sessionKeyCounts: {},
+  liveSamples: []
+};
+
+let liveChart = null;
+let progressChart = null;
+let audioCtx = null;
+
+/* ===================== WORD GENERATION ===================== */
+function pickWord(pool){ return pool[Math.floor(Math.random()*pool.length)]; }
+
+function generateWords(difficulty, count){
+  const pool = WORD_POOLS[difficulty];
+  const punctChance = PUNCT_CHANCE[difficulty];
+  const numberChance = NUMBER_CHANCE[difficulty];
+  const words = [];
+  let sinceSentenceStart = 0;
+  let nextCapital = false;
+  let sentenceTarget = 7 + Math.floor(Math.random()*6);
+
+  for(let i=0;i<count;i++){
+    let w;
+    if(numberChance>0 && Math.random()<numberChance){
+      w = String(Math.floor(Math.random()*9000)+10);
+    } else {
+      w = pickWord(pool);
+    }
+    if(nextCapital){
+      w = w.charAt(0).toUpperCase()+w.slice(1);
+      nextCapital = false;
+    }
+    sinceSentenceStart++;
+    if(punctChance>0 && sinceSentenceStart>=sentenceTarget){
+      const opts = [".", ".", ".", "!", "?"];
+      w += opts[Math.floor(Math.random()*opts.length)];
+      nextCapital = true;
+      sinceSentenceStart = 0;
+      sentenceTarget = 7 + Math.floor(Math.random()*6);
+    } else if(punctChance>0 && Math.random() < punctChance*0.35){
+      w += ",";
+    }
+    words.push(w);
+  }
+  return words;
+}
+
+/* ===================== AUDIO ===================== */
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e){ audioCtx = null; }
+  }
+  if(audioCtx && audioCtx.state === "suspended"){ audioCtx.resume(); }
+}
+function playTone(freq, dur, type){
+  if(!settings.sound || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || "sine";
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime+0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime+dur+0.02);
+}
+function playTick(){ playTone(720, 0.045, "sine"); }
+function playBuzz(){ playTone(160, 0.09, "square"); }
+function playChime(){
+  if(!settings.sound || !audioCtx) return;
+  [660, 880, 1320].forEach((f,i)=>{
+    setTimeout(()=>playTone(f, 0.18, "triangle"), i*90);
+  });
+}
+
+/* ===================== STORAGE ===================== */
+async function loadSettings(){
+  try{
+    const res = await window.storage.get("settings", false);
+    if(res && res.value){ settings = Object.assign(settings, JSON.parse(res.value)); }
+  }catch(e){ /* defaults stand */ }
+}
+async function saveSettings(){
+  try{ await window.storage.set("settings", JSON.stringify(settings), false); }
+  catch(e){ console.error("Failed to save settings", e); }
+}
+async function loadHeatmap(){
+  try{
+    const res = await window.storage.get("heatmap_data", false);
+    if(res && res.value){ heatmapCounts = JSON.parse(res.value); }
+  }catch(e){ heatmapCounts = {}; }
+}
+async function saveHeatmap(){
+  try{ await window.storage.set("heatmap_data", JSON.stringify(heatmapCounts), false); }
+  catch(e){ console.error("Failed to save heatmap", e); }
+}
+async function loadSessions(){
+  let sessions = [];
+  try{
+    const listRes = await window.storage.list("session_", false);
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    for(const k of keys){
+      try{
+        const res = await window.storage.get(k, false);
+        if(res && res.value) sessions.push(JSON.parse(res.value));
+      }catch(e){ /* skip */ }
+    }
+  }catch(e){ console.error("Failed to load sessions", e); }
+  sessions.sort((a,b)=>a.timestamp-b.timestamp);
+  allSessions = sessions;
+}
+async function saveSession(record){
+  try{ await window.storage.set("session_"+record.timestamp, JSON.stringify(record), false); }
+  catch(e){ console.error("Failed to save session", e); }
+}
+async function resetAllData(){
+  try{
+    const listRes = await window.storage.list("session_", false);
+    const keys = (listRes && listRes.keys) ? listRes.keys : [];
+    for(const k of keys){ try{ await window.storage.delete(k, false); }catch(e){} }
+    await window.storage.delete("heatmap_data", false);
+  }catch(e){ console.error("Reset failed", e); }
+  allSessions = [];
+  heatmapCounts = {};
+}
+
+console.log("draft module parsed ok");
+
+/* ===================== RENDERING: TABS ===================== */
+function renderTabs(){
+  const diffWrap = document.getElementById("difficultyTabs");
+  diffWrap.innerHTML = "";
+  DIFFICULTIES.forEach(d=>{
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (d.id===test.difficulty ? " active" : "");
+    btn.textContent = d.label;
+    btn.title = d.hint;
+    btn.addEventListener("click", ()=>{ test.difficulty = d.id; startTest(); renderTabs(); renderLeaderboard(); });
+    diffWrap.appendChild(btn);
+  });
+  document.getElementById("difficultyHint").textContent = DIFFICULTIES.find(d=>d.id===test.difficulty).hint;
+
+  const durWrap = document.getElementById("durationTabs");
+  durWrap.innerHTML = "";
+  DURATIONS.forEach(s=>{
+    const btn = document.createElement("button");
+    btn.className = "tab-btn" + (s===test.duration ? " active" : "");
+    btn.textContent = s+"s";
+    btn.addEventListener("click", ()=>{ test.duration = s; startTest(); renderTabs(); });
+    durWrap.appendChild(btn);
+  });
+}
+
+/* ===================== RENDERING: WORDS ===================== */
+function wordCommitClass(typed, expected){
+  const clean = expected.replace(/[.,!?]/g,"");
+  const cleanTyped = typed;
+  return cleanTyped === expected || cleanTyped === clean ? "correct" : "incorrect";
+}
+function charSpansForCommitted(typed, expected){
+  let html = "";
+  const len = Math.max(typed.length, expected.length);
+  for(let i=0;i<len;i++){
+    if(i<expected.length && i<typed.length){
+      html += `<span class="ch ${typed[i]===expected[i] ? "ok":"bad"}">${escapeHtml(expected[i])}</span>`;
+    } else if(i<expected.length){
+      html += `<span class="ch bad missing">${escapeHtml(expected[i])}</span>`;
+    } else {
+      html += `<span class="ch bad extra">${escapeHtml(typed[i])}</span>`;
+    }
+  }
+  return html;
+}
+function charSpansLive(typed, expected){
+  let html = "";
+  const len = Math.max(typed.length, expected.length);
+  for(let i=0;i<len;i++){
+    let cls = "pending";
+    let ch = i<expected.length ? expected[i] : typed[i];
+    if(i < typed.length){
+      if(i < expected.length){ cls = typed[i]===expected[i] ? "ok" : "bad"; }
+      else { cls = "bad extra"; }
+    }
+    if(i === typed.length) cls += " caret";
+    html += `<span class="ch ${cls}">${escapeHtml(ch)}</span>`;
+  }
+  if(typed.length >= expected.length){
+    html += `<span class="ch pending caret"></span>`;
+  }
+  return html;
+}
+function escapeHtml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function renderWordsFull(){
+  const box = document.getElementById("wordsDisplay");
+  box.innerHTML = "";
+  test.words.forEach((w, i)=>{
+    const span = document.createElement("span");
+    span.className = "word" + (i===test.currentIndex ? " current" : "");
+    span.dataset.i = i;
+    if(i === test.currentIndex){
+      span.innerHTML = charSpansLive(test.currentTyped, w);
+    } else {
+      span.innerHTML = `<span class="ch pending">${escapeHtml(w).split("").join('</span><span class="ch pending">')}</span>`;
+    }
+    box.appendChild(span);
+  });
+}
+function appendWordsToDom(newWords, startIndex){
+  const box = document.getElementById("wordsDisplay");
+  newWords.forEach((w,offset)=>{
+    const i = startIndex+offset;
+    const span = document.createElement("span");
+    span.className = "word";
+    span.dataset.i = i;
+    span.innerHTML = `<span class="ch pending">${escapeHtml(w).split("").join('</span><span class="ch pending">')}</span>`;
+    box.appendChild(span);
+  });
+}
+function updateCurrentWordDom(){
+  const box = document.getElementById("wordsDisplay");
+  const el = box.querySelector('.word[data-i="'+test.currentIndex+'"]');
+  if(!el) return;
+  el.innerHTML = charSpansLive(test.currentTyped, test.words[test.currentIndex]);
+  maybeScroll(el);
+}
+function maybeScroll(curEl){
+  const box = document.getElementById("wordsDisplay");
+  const boxRect = box.getBoundingClientRect();
+  const curRect = curEl.getBoundingClientRect();
+  const lineH = curEl.offsetHeight || 40;
+  const relative = curRect.top - boxRect.top;
+  if(relative > lineH*1.6){
+    box.scrollTop += lineH;
+  }
+}
+
+function ensureWordBuffer(){
+  if(test.words.length - test.currentIndex < 15){
+    const more = generateWords(test.difficulty, 40);
+    const startIndex = test.words.length;
+    test.words = test.words.concat(more);
+    appendWordsToDom(more, startIndex);
+  }
+}
+
+/* ===================== TEST CONTROL ===================== */
+function startTest(){
+  if(test.timerId) clearInterval(test.timerId);
+  if(test.sampleId) clearInterval(test.sampleId);
+  test.words = generateWords(test.difficulty, 60);
+  test.currentIndex = 0;
+  test.currentTyped = "";
+  test.active = false;
+  test.finished = false;
+  test.startTime = null;
+  test.timeRemaining = test.duration;
+  test.totalTyped = 0;
+  test.totalCorrect = 0;
+  test.totalIncorrect = 0;
+  test.sessionKeyCounts = {};
+  test.liveSamples = [];
+
+  document.getElementById("resultsOverlay").classList.remove("show");
+  document.getElementById("timerDisplay").textContent = formatClock(test.timeRemaining);
+  document.getElementById("timerBar").style.width = "100%";
+  document.getElementById("liveWpm").textContent = "0";
+  renderWordsFull();
+  resetLiveChart();
+  const wrap = document.getElementById("testWrapper");
+  wrap.classList.remove("locked");
+}
+
+function formatClock(totalSeconds){
+  const m = Math.floor(totalSeconds/60);
+  const s = totalSeconds%60;
+  return (m>0 ? m+":"+String(s).padStart(2,"0") : "0:"+String(s).padStart(2,"0"));
+}
+
+function beginTimers(){
+  test.active = true;
+  test.startTime = Date.now();
+  test.timerId = setInterval(tickTimer, 1000);
+  test.sampleId = setInterval(sampleLive, 1000);
+}
+function tickTimer(){
+  test.timeRemaining--;
+  document.getElementById("timerDisplay").textContent = formatClock(Math.max(test.timeRemaining,0));
+  const pct = Math.max(test.timeRemaining,0)/test.duration*100;
+  document.getElementById("timerBar").style.width = pct+"%";
+  if(test.timeRemaining<=0){ finishTest(); }
+}
+function sampleLive(){
+  const elapsedMin = (Date.now()-test.startTime)/60000;
+  if(elapsedMin<=0) return;
+  const wpm = Math.round((test.totalCorrect/5)/elapsedMin);
+  const acc = test.totalTyped>0 ? Math.round((test.totalCorrect/test.totalTyped)*1000)/10 : 100;
+  test.liveSamples.push({ t: test.duration-test.timeRemaining, wpm: Math.max(wpm,0), acc });
+  document.getElementById("liveWpm").textContent = Math.max(wpm,0);
+  updateLiveChart();
+}
+
+function handleChar(ch){
+  ensureAudio();
+  if(!test.active) beginTimers();
+  const expected = test.words[test.currentIndex] || "";
+  const pos = test.currentTyped.length;
+  if(pos < expected.length + 10){
+    test.currentTyped += ch;
+  } else {
+    return;
+  }
+  test.totalTyped++;
+  const expectedChar = expected[pos];
+  const isCorrect = pos < expected.length && expectedChar === ch;
+  if(pos >= expected.length || !isCorrect){
+    test.totalIncorrect++;
+    playBuzz();
+  } else {
+    test.totalCorrect++;
+    playTick();
+  }
+  const heatKey = ch.length===1 ? ch.toLowerCase() : ch;
+  test.sessionKeyCounts[heatKey] = (test.sessionKeyCounts[heatKey]||0)+1;
+  updateCurrentWordDom();
+}
+function handleBackspace(){
+  if(test.currentTyped.length===0) return;
+  test.currentTyped = test.currentTyped.slice(0,-1);
+  updateCurrentWordDom();
+}
+function commitCurrentWord(){
+  if(!test.active) return;
+  if(test.currentTyped.length===0) return;
+  const box = document.getElementById("wordsDisplay");
+  const el = box.querySelector('.word[data-i="'+test.currentIndex+'"]');
+  const expected = test.words[test.currentIndex];
+  const cls = wordCommitClass(test.currentTyped, expected);
+  if(el){
+    el.className = "word done "+cls;
+    el.innerHTML = charSpansForCommitted(test.currentTyped, expected);
+  }
+  test.currentIndex++;
+  test.currentTyped = "";
+  ensureWordBuffer();
+  const nextEl = box.querySelector('.word[data-i="'+test.currentIndex+'"]');
+  if(nextEl){
+    nextEl.classList.add("current");
+    nextEl.innerHTML = charSpansLive("", test.words[test.currentIndex]);
+    maybeScroll(nextEl);
+  }
+}
+
+function finishTest(){
+  if(test.finished) return;
+  test.finished = true;
+  test.active = false;
+  if(test.timerId) clearInterval(test.timerId);
+  if(test.sampleId) clearInterval(test.sampleId);
+  document.getElementById("testWrapper").classList.add("locked");
+
+  const minutes = test.duration/60;
+  const netWpm = Math.round((test.totalCorrect/5)/minutes);
+  const rawWpm = Math.round((test.totalTyped/5)/minutes);
+  const accuracy = test.totalTyped>0 ? Math.round((test.totalCorrect/test.totalTyped)*1000)/10 : 100;
+  const cpm = Math.round(test.totalTyped/minutes);
+
+  Object.keys(test.sessionKeyCounts).forEach(k=>{
+    heatmapCounts[k] = (heatmapCounts[k]||0) + test.sessionKeyCounts[k];
+  });
+  saveHeatmap();
+  renderHeatmap();
+
+  const prevBest = allSessions.filter(s=>s.difficulty===test.difficulty).reduce((m,s)=>Math.max(m,s.wpm),0);
+  const isNewBest = netWpm>prevBest && allSessions.some(s=>s.difficulty===test.difficulty);
+
+  const record = {
+    timestamp: Date.now(),
+    date: new Date().toISOString().slice(0,10),
+    difficulty: test.difficulty,
+    duration: test.duration,
+    wpm: netWpm,
+    rawWpm: rawWpm,
+    accuracy: accuracy,
+    cpm: cpm
+  };
+  allSessions.push(record);
+  saveSession(record);
+
+  showResults(netWpm, rawWpm, accuracy, cpm, isNewBest);
+  playChime();
+  renderSidebarStats();
+  renderLeaderboard();
+  renderHistoryTable();
+  renderProgressChart();
+  renderTabs();
+}
+
+function showResults(wpm, rawWpm, accuracy, cpm, isNewBest){
+  const overlay = document.getElementById("resultsOverlay");
+  document.getElementById("resultBadge").style.display = isNewBest ? "inline-flex" : "none";
+  overlay.classList.add("show");
+  animateNumber("resultWpm", 0, wpm, 700);
+  document.getElementById("resultRaw").textContent = rawWpm;
+  document.getElementById("resultAcc").textContent = accuracy+"%";
+  document.getElementById("resultCpm").textContent = cpm;
+  document.getElementById("resultCorrect").textContent = test.totalCorrect;
+}
+function animateNumber(elId, from, to, duration){
+  const el = document.getElementById(elId);
+  const start = performance.now();
+  function step(now){
+    const p = Math.min((now-start)/duration, 1);
+    const val = Math.round(from + (to-from)*p);
+    el.textContent = val;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+console.log("draft part2 parsed ok");
+
+/* ===================== SIDEBAR STATS / LEADERBOARD / HISTORY ===================== */
+function renderSidebarStats(){
+  if(allSessions.length===0){
+    document.getElementById("ovBest").textContent = "--";
+    document.getElementById("ovAcc").textContent = "--";
+    document.getElementById("ovCpm").textContent = "--";
+    document.getElementById("ovTotal").textContent = "0";
+    document.getElementById("ovStreak").textContent = "0";
+    return;
+  }
+  const best = Math.max(...allSessions.map(s=>s.wpm));
+  const avgAcc = allSessions.reduce((a,s)=>a+s.accuracy,0)/allSessions.length;
+  const bestCpm = Math.max(...allSessions.map(s=>s.cpm));
+  document.getElementById("ovBest").textContent = best;
+  document.getElementById("ovAcc").textContent = avgAcc.toFixed(1)+"%";
+  document.getElementById("ovCpm").textContent = bestCpm;
+  document.getElementById("ovTotal").textContent = allSessions.length;
+
+  const dateSet = new Set(allSessions.map(s=>s.date));
+  let cursor = new Date();
+  if(!dateSet.has(cursor.toISOString().slice(0,10))) cursor.setDate(cursor.getDate()-1);
+  let streak = 0;
+  while(dateSet.has(cursor.toISOString().slice(0,10))){ streak++; cursor.setDate(cursor.getDate()-1); }
+  document.getElementById("ovStreak").textContent = streak;
+}
+
+function renderLeaderboard(){
+  const body = document.getElementById("leaderboardBody");
+  body.innerHTML = "";
+  DIFFICULTIES.forEach(d=>{
+    const matches = allSessions.filter(s=>s.difficulty===d.id);
+    const best = matches.length ? Math.max(...matches.map(s=>s.wpm)) : null;
+    const bestAcc = matches.length ? Math.max(...matches.map(s=>s.accuracy)) : null;
+    const row = document.createElement("div");
+    row.className = "lb-row" + (d.id===test.difficulty ? " active" : "");
+    row.innerHTML = `<span class="lb-name">${d.label}</span>
+      <span class="lb-val">${best!==null ? best+" wpm" : "--"}</span>
+      <span class="lb-val muted">${bestAcc!==null ? bestAcc+"%" : "--"}</span>`;
+    body.appendChild(row);
+  });
+}
+
+function renderHistoryTable(){
+  const table = document.getElementById("historyTable");
+  const empty = document.getElementById("historyEmpty");
+  const body = document.getElementById("historyBody");
+  if(allSessions.length===0){
+    table.style.display = "none";
+    empty.style.display = "block";
+    return;
+  }
+  table.style.display = "table";
+  empty.style.display = "none";
+  const recent = allSessions.slice(-20).reverse();
+  body.innerHTML = recent.map(s=>{
+    const d = new Date(s.timestamp);
+    const dateStr = d.toLocaleDateString('en-US',{day:'numeric',month:'short'}) + " " + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    return `<tr><td>${dateStr}</td><td class="cap">${s.difficulty}</td><td>${s.duration}s</td><td>${s.wpm}</td><td>${s.accuracy}%</td><td>${s.cpm}</td></tr>`;
+  }).join("");
+}
+
+/* ===================== KEYBOARD HEATMAP ===================== */
+function renderHeatmap(){
+  const kb = document.getElementById("heatmapKeyboard");
+  kb.innerHTML = "";
+  const counts = Object.values(heatmapCounts);
+  const max = counts.length ? Math.max(...counts) : 0;
+  KB_LAYOUT.forEach(row=>{
+    const rowEl = document.createElement("div");
+    rowEl.className = "hm-row";
+    row.forEach(key=>{
+      const cell = document.createElement("div");
+      cell.className = "hm-key" + (key.mod ? " mod" : "");
+      cell.style.flex = key.w || 1;
+      cell.textContent = key.k;
+      if(!key.mod && max>0){
+        const mapKey = key.k.toLowerCase();
+        const count = heatmapCounts[mapKey] || 0;
+        const intensity = count/max;
+        if(intensity>0){
+          cell.style.background = "rgba(var(--accent-rgb),"+(0.12+intensity*0.7).toFixed(3)+")";
+          cell.style.borderColor = "rgba(var(--accent-rgb),"+(0.3+intensity*0.6).toFixed(3)+")";
+          if(intensity>0.45) cell.style.color = "#1b1408";
+        }
+      }
+      rowEl.appendChild(cell);
+    });
+    kb.appendChild(rowEl);
+  });
+}
+
+/* ===================== CHARTS ===================== */
+function resetLiveChart(){
+  if(!liveChart) return;
+  liveChart.data.labels = [];
+  liveChart.data.datasets[0].data = [];
+  liveChart.data.datasets[1].data = [];
+  liveChart.update();
+}
+function updateLiveChart(){
+  if(!liveChart) return;
+  liveChart.data.labels = test.liveSamples.map(s=>s.t+"s");
+  liveChart.data.datasets[0].data = test.liveSamples.map(s=>s.wpm);
+  liveChart.data.datasets[1].data = test.liveSamples.map(s=>s.acc);
+  liveChart.update();
+}
+function initLiveChart(){
+  const ctx = document.getElementById("liveChart").getContext("2d");
+  liveChart = new Chart(ctx, {
+    type: "line",
+    data: { labels: [], datasets: [
+      { label:"WPM", data:[], borderColor:"#f2a93b", backgroundColor:"rgba(242,169,59,0.15)", tension:0.35, fill:true, yAxisID:"y" },
+      { label:"Accuracy %", data:[], borderColor:"#3ddad7", backgroundColor:"rgba(61,218,215,0.1)", tension:0.35, fill:true, yAxisID:"y1" }
+    ]},
+    options: chartOptions()
+  });
+}
+function initProgressChart(){
+  const ctx = document.getElementById("progressChart").getContext("2d");
+  progressChart = new Chart(ctx, {
+    type: "line",
+    data: { labels: [], datasets: [
+      { label:"WPM", data:[], borderColor:"#f2a93b", backgroundColor:"#f2a93b", tension:0.3, yAxisID:"y" },
+      { label:"Accuracy %", data:[], borderColor:"#3ddad7", backgroundColor:"#3ddad7", tension:0.3, yAxisID:"y1" }
+    ]},
+    options: chartOptions()
+  });
+}
+function chartOptions(){
+  const gridColor = getComputedStyle(document.documentElement).getPropertyValue("--chart-grid").trim() || "#333";
+  const tickColor = getComputedStyle(document.documentElement).getPropertyValue("--chart-tick").trim() || "#999";
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode:"index", intersect:false },
+    animation: { duration: 300 },
+    scales: {
+      y: { type:"linear", position:"left", title:{display:true,text:"WPM",color:tickColor}, grid:{color:gridColor}, ticks:{color:tickColor} },
+      y1: { type:"linear", position:"right", min:0, max:100, title:{display:true,text:"%",color:tickColor}, grid:{drawOnChartArea:false}, ticks:{color:tickColor} },
+      x: { ticks:{color:tickColor, maxRotation:0}, grid:{color:gridColor} }
+    },
+    plugins: { legend:{ labels:{ color: tickColor } } }
+  };
+}
+function renderProgressChart(){
+  if(!progressChart) return;
+  const recent = allSessions.slice(-30);
+  progressChart.data.labels = recent.map(s=> new Date(s.timestamp).toLocaleDateString('en-US',{day:'numeric',month:'short'}));
+  progressChart.data.datasets[0].data = recent.map(s=>s.wpm);
+  progressChart.data.datasets[1].data = recent.map(s=>s.accuracy);
+  progressChart.update();
+  const empty = document.getElementById("progressEmpty");
+  const canvas = document.getElementById("progressChart");
+  if(recent.length===0){ canvas.style.display="none"; empty.style.display="block"; }
+  else { canvas.style.display="block"; empty.style.display="none"; }
+}
+
+console.log("draft part3 parsed ok");
+
+/* ===================== THEME / SOUND TOGGLES ===================== */
+function applyTheme(){
+  document.documentElement.setAttribute("data-theme", settings.theme);
+  document.getElementById("themeIconSun").style.display = settings.theme==="dark" ? "block" : "none";
+  document.getElementById("themeIconMoon").style.display = settings.theme==="light" ? "block" : "none";
+  if(progressChart){ progressChart.options = chartOptions(); progressChart.update(); }
+  if(liveChart){ liveChart.options = chartOptions(); liveChart.update(); }
+}
+function toggleTheme(){
+  settings.theme = settings.theme==="dark" ? "light" : "dark";
+  applyTheme();
+  saveSettings();
+}
+function applySoundIcon(){
+  document.getElementById("soundIconOn").style.display = settings.sound ? "block" : "none";
+  document.getElementById("soundIconOff").style.display = settings.sound ? "none" : "block";
+}
+function toggleSound(){
+  settings.sound = !settings.sound;
+  applySoundIcon();
+  saveSettings();
+  if(settings.sound){ ensureAudio(); playTick(); }
+}
+
+/* ===================== EXPORT ===================== */
+function exportCSV(){
+  const header = "Date,Difficulty,Duration(s),WPM,Raw WPM,Accuracy(%),CPM\n";
+  const rows = allSessions.map(s=>`${s.date},${s.difficulty},${s.duration},${s.wpm},${s.rawWpm},${s.accuracy},${s.cpm}`).join("\n");
+  const blob = new Blob([header+rows], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "typing-practice-history.csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function exportPDF(){
+  try{
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFont("helvetica","bold"); doc.setFontSize(18);
+    doc.text("Typing Practice Report", 14, 18);
+    doc.setFontSize(10); doc.setFont("helvetica","normal");
+    doc.text("Generated: "+new Date().toLocaleString(), 14, 26);
+    let y = 40;
+    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text("Summary", 14, y); y+=8;
+    doc.setFont("helvetica","normal"); doc.setFontSize(10);
+    const best = allSessions.length ? Math.max(...allSessions.map(s=>s.wpm)) : 0;
+    const avgAcc = allSessions.length ? (allSessions.reduce((a,s)=>a+s.accuracy,0)/allSessions.length).toFixed(1) : 0;
+    doc.text(`Best WPM: ${best}`, 14, y); y+=6;
+    doc.text(`Average Accuracy: ${avgAcc}%`, 14, y); y+=6;
+    doc.text(`Total Sessions: ${allSessions.length}`, 14, y); y+=12;
+    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text("Recent Sessions", 14, y); y+=8;
+    doc.setFont("helvetica","normal"); doc.setFontSize(9);
+    doc.text("Date         Difficulty   Duration   WPM   Accuracy   CPM", 14, y); y+=5;
+    const recent = allSessions.slice(-30).reverse();
+    recent.forEach(s=>{
+      if(y>280){ doc.addPage(); y=20; }
+      const line = `${s.date}   ${s.difficulty.padEnd(10)}   ${String(s.duration+"s").padEnd(8)}   ${String(s.wpm).padEnd(5)} ${String(s.accuracy+"%").padEnd(8)}   ${s.cpm}`;
+      doc.text(line, 14, y); y+=5;
+    });
+    doc.save("typing-practice-report.pdf");
+  }catch(err){
+    console.error("PDF export failed:", err);
+    alert("PDF export could not be generated. Check your internet connection and try again.");
+  }
+}
+
+/* ===================== RESET ===================== */
+function initResetButton(){
+  const btn = document.getElementById("resetBtn");
+  let confirming = false, timeoutId = null;
+  btn.addEventListener("click", ()=>{
+    if(!confirming){
+      confirming = true;
+      btn.textContent = "Click again to confirm";
+      btn.classList.add("confirming");
+      timeoutId = setTimeout(()=>{ confirming=false; btn.textContent="Reset All Data"; btn.classList.remove("confirming"); }, 3000);
+    } else {
+      clearTimeout(timeoutId);
+      confirming = false;
+      btn.textContent = "Reset All Data";
+      btn.classList.remove("confirming");
+      resetAllData().then(()=>{
+        renderSidebarStats(); renderLeaderboard(); renderHistoryTable(); renderProgressChart(); renderHeatmap(); renderTabs();
+      });
+    }
+  });
+}
+
+/* ===================== KEYBOARD INPUT ===================== */
+function initInputCapture(){
+  const wrap = document.getElementById("testWrapper");
+  const overlay = document.getElementById("focusOverlay");
+  wrap.setAttribute("tabindex","0");
+  wrap.addEventListener("focus", ()=> overlay.classList.add("hide"));
+  wrap.addEventListener("blur", ()=>{ if(!test.finished) overlay.classList.remove("hide"); });
+  wrap.addEventListener("click", ()=> wrap.focus());
+
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Tab" || e.key === "Enter"){
+      e.preventDefault();
+      startTest();
+      wrap.focus();
+      return;
+    }
+    if(document.activeElement !== wrap) return;
+    if(test.finished) return;
+    if(e.key === "Backspace"){ e.preventDefault(); handleBackspace(); return; }
+    if(e.key === " "){ e.preventDefault(); commitCurrentWord(); return; }
+    if(e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey){
+      e.preventDefault();
+      handleChar(e.key);
+    }
+  });
+}
+
+/* ===================== INIT ===================== */
+function safe(fn, label){
+  try{ fn(); }
+  catch(err){ console.error((label||"step")+" failed:", err); }
+}
+function safeInitCharts(){
+  if(typeof Chart === "undefined"){
+    console.warn("Chart.js did not load — showing charts as unavailable.");
+    ["liveChart","progressChart"].forEach(id=>{
+      const canvas = document.getElementById(id);
+      if(canvas) canvas.style.display = "none";
+    });
+    document.querySelectorAll(".chart-box").forEach(box=>{
+      const msg = document.createElement("div");
+      msg.className = "chart-empty";
+      msg.style.display = "block";
+      msg.textContent = "Chart library could not load — check your internet connection. The typing test still works fully.";
+      box.appendChild(msg);
+    });
+    return;
+  }
+  initLiveChart();
+  initProgressChart();
+}
+
+async function init(){
+  try{ await loadSettings(); }catch(e){ console.error("loadSettings failed:", e); }
+  try{ await loadHeatmap(); }catch(e){ console.error("loadHeatmap failed:", e); }
+  try{ await loadSessions(); }catch(e){ console.error("loadSessions failed:", e); }
+
+  safe(applyTheme, "applyTheme");
+  safe(applySoundIcon, "applySoundIcon");
+  safe(()=>{
+    document.getElementById("todayDate").textContent =
+      new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+  }, "date badge");
+
+  safe(safeInitCharts, "chart init");
+  safe(initInputCapture, "input capture");
+  safe(initResetButton, "reset button");
+
+  safe(()=>{
+    document.getElementById("themeToggle").addEventListener("click", toggleTheme);
+    document.getElementById("soundToggle").addEventListener("click", toggleSound);
+    document.getElementById("restartBtn").addEventListener("click", ()=>{ startTest(); document.getElementById("testWrapper").focus(); });
+    document.getElementById("resultRestartBtn").addEventListener("click", ()=>{ startTest(); document.getElementById("testWrapper").focus(); });
+    document.getElementById("exportCsvBtn").addEventListener("click", exportCSV);
+    document.getElementById("exportPdfBtn").addEventListener("click", exportPDF);
+  }, "button bindings");
+
+  safe(renderTabs, "renderTabs");
+  safe(renderSidebarStats, "renderSidebarStats");
+  safe(renderLeaderboard, "renderLeaderboard");
+  safe(renderHistoryTable, "renderHistoryTable");
+  safe(renderProgressChart, "renderProgressChart");
+  safe(renderHeatmap, "renderHeatmap");
+  safe(startTest, "startTest");
+}
+init();
+</script>
+</body>
+</html>
